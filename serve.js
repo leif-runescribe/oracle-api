@@ -3,10 +3,12 @@ const dotenv = require("dotenv");
 const axios = require("axios");
 const { PriceServiceConnection } = require("@pythnetwork/price-service-client");
 const { Client } = require("@bandprotocol/bandchain.js");
+const cors = require('cors')
 // Load environment variables from .env file
 dotenv.config();
 
 const app = express();
+app.use(cors())
 const port = process.env.PORT;
 
 // Define a basic route
