@@ -13,67 +13,58 @@ const port = process.env.PORT;
 app.get("/", (req, res) => {
   res.send("agrigato backend");
 });
-app.get("/fetch", async (req, res) => {
-  try {
-    const url =
-      "https://hermes.pyth.network/v2/price_feeds?query=&asset_type=crypto";
-    const resp = await axios.get(url);
 
-    const ids = resp.data.map((crypto) => crypto);
-    res.send(ids);
-    console.log(ids);
-  } catch (error) {
-    console.error(error); // Use console.error for logging errors
-    res.status(500).send("Error fetching data");
-  }
-});
 
-app.get("/pyth", async (req, res) => {
+
+
+  app.get('/pyth/:id1', async (req, res) => {
+      const Id = 
+      req.params.id1 
+      
+  
     try {
-      const { ids } = req.query;
-      if (!ids) {
-        return res.status(400).json({ error: 'Missing ids parameter' });
-      }
-  
-      const priceIds = ids.split(',').map(id => id.trim());
-  
       const connection = new PriceServiceConnection("https://hermes.pyth.network");
-      const currentPrices = await connection.getLatestPriceFeeds(priceIds);
-  
-      res.json(currentPrices);
-      console.log("new run--------------------------------")
-      console.log("Fetched prices:", currentPrices);
+      
+      const x1 = await connection.getLatestPriceFeeds([Id])
+      
+      const {conf, expo, price} = x1[0].price
+      const { conf: conf1, expo: expo1, price: price1 } = x1[0].emaPrice;
+      const p = parseFloat(price)*Math.pow(10, expo)
+      const p1 = parseFloat(price1)*Math.pow(10, expo1)
+      console.log(p,p1)
+      
+      res.send({p,p1})
+      
     } catch (error) {
-      console.error("Error fetching prices:", error);
-      res.status(500).json({ error: 'Failed to fetch prices' });
+      console.error('Error fetching price feeds:', error);
+      res.status(500).json({ error: 'Failed to fetch price feeds' });
     }
   });
 
-  app.get("/band/:base/:quote", async (req, res) => {
+  app.get("/band/:crypto1/:crypto2", async (req, res) => {
     try {
       const endpoint = "https://laozi-testnet6.bandchain.org/grpc-web";
       const client = new Client(endpoint);
   
       const minCount = 3;
       const askCount = 4;
-      const base = req.params.base;
-      const quote = req.params.quote;
-  
-      // This example demonstrates how to query price data from
-      // Band's standard dataset
-      async function exampleGetReferenceData(base, quote) {
+      const c1 = req.params.crypto1;
+      const c2 = req.params.crypto2;
+      async function exampleGetReferenceData(c1,c2) {
         const rate = await client.getReferenceData(
-          [`${base}/${quote}`],
+          [`${c1}/${c2}`],
           minCount,
           askCount
         );
         return rate;
-      }
-  
+      } 
       try {
-        const rate = await exampleGetReferenceData(base, quote);
-        console.log(rate);
-        res.send(rate);
+        const rate = await exampleGetReferenceData(c1, c2);
+        
+        
+        const {rate: r} = rate[0] 
+        console.log(r);
+        res.send({r});
       } catch (error) {
         console.error("Error fetching reference data:", error);
         res.status(500).send({ error: "Error fetching reference data" });
